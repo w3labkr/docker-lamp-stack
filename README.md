@@ -53,6 +53,8 @@ Execute a command in a running container
 ```shell
 docker compose exec mariadb bash
 mysql -uroot -psecret
+show databases;
+select Host, User from mysql.user;
 exit
 ```
 
