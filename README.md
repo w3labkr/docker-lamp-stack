@@ -14,7 +14,7 @@ Build and Run the Containers
 
 ```shell
 git clone https://github.com/w3labkr/docker-lamp-stack.git
-cd docker
+cd docker-lamp-stack/docker
 cp .env.example .env
 docker compose up -d
 ```
