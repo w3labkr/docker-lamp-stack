@@ -1,0 +1,93 @@
+services:
+  apache2:
+    restart: "always"
+    build:
+      context: ./bin/${PHP_VERSION}
+    links:
+      - mariadb
+      # - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_PORT: ${MYSQL_PORT}
+      XDEBUG_CONFIG: "client_host=host.docker.internal remote_port=${XDEBUG_PORT}"
+    volumes:
+      - ../www:/var/www:rw
+      - ./php/${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
+      - ./apache2/ssl:/etc/apache2/ssl/
+      - ./apache2/sites:/etc/apache2/sites-enabled
+      - ./log/apache2:/var/log/apache2
+      - ./log/xdebug:/var/log/xdebug
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - frontend
+      - backend
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+  mariadb:
+    restart: "unless-stopped"
+    build:
+      context: "./bin/${MYSQL_VERSION}"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: ${TIMEZONE}
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+      - ./log/mariadb:/var/log/mysql
+      - ./mariadb/my.cnf:/etc/mysql/my.cnf
+      - ./mariadb/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    ports:
+      - "${MYSQL_PORT}:3306"
+    networks:
+      - backend
+  # mysql:
+  #   restart: "unless-stopped"
+  #   # platform: linux/amd64 # For Apple Silicon User
+  #   build:
+  #     context: "./bin/${MYSQL_VERSION}"
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+  #     MYSQL_DATABASE: ${MYSQL_DATABASE}
+  #     MYSQL_USER: ${MYSQL_USER}
+  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+  #     TZ: ${TIMEZONE}
+  #   volumes:
+  #     - ./data/mysql:/var/lib/mysql
+  #     - ./log/mysql:/var/log/mysql
+  #     - ./mysql/my.cnf:/etc/mysql/my.cnf
+  #     - ./mysql/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+  #   ports:
+  #     - "${MYSQL_PORT}:3306"
+  #   networks:
+  #     - backend
+  # redis:
+  #   restart: "always"
+  #   build:
+  #     context: "./bin/redis"
+  #   volumes:
+  #       - ./data/redis:/data
+  #   command: --requirepass ${REDIS_PASSWORD}
+  #   ports:
+  #     - "${REDIS_PORT}:6379"
+  #   networks:
+  #     - backend
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+volumes:
+  mariadb:
+    driver: local
+  # mysql:
+  #   driver: local
+  # redis:
+  #   driver: local
