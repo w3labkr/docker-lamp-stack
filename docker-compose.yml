@@ -14,7 +14,7 @@ services:
       MYSQL_PORT: ${MYSQL_PORT}
       XDEBUG_CONFIG: "client_host=host.docker.internal remote_port=${XDEBUG_PORT}"
     volumes:
-      - ../www:/var/www:rw
+      - ${DOCUMENT_ROOT}:/var/www:rw
       - ./php/${PHP_VERSION}.ini:/usr/local/etc/php/php.ini
       - ./apache2/ssl:/etc/apache2/ssl/
       - ./apache2/sites:/etc/apache2/sites-enabled

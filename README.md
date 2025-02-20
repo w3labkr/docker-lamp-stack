@@ -13,8 +13,8 @@ A basic LAMP stack environment built using Docker Compose. It consists of the fo
 Build and Run the Containers
 
 ```shell
-git clone https://github.com/w3labkr/docker-lamp-stack.git
-cd docker-lamp-stack/docker
+git clone https://github.com/w3labkr/docker-lamp-stack.git docker
+cd docker
 cp .env.example .env
 docker compose up -d
 ```
