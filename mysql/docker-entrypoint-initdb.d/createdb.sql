@@ -16,12 +16,12 @@
 #     mysql -u root -p < /docker-entrypoint-initdb.d/createdb.sql
 #
 
-CREATE DATABASE IF NOT EXISTS `testdb` CHARACTER SET utf8mb4 COLLATE 'utf8mb4_unicode_ci' ;
+CREATE DATABASE IF NOT EXISTS `testdb` CHARACTER SET utf8mb4 COLLATE 'utf8mb4_unicode_ci';
 
-CREATE USER `test`@'localhost' IDENTIFIED BY 'secret' PASSWORD EXPIRE NEVER;
-GRANT ALL PRIVILEGES ON *.* TO `test`@'localhost';
+CREATE USER IF NOT EXISTS `test`@'localhost' IDENTIFIED BY 'secret' PASSWORD EXPIRE NEVER;
+GRANT ALL PRIVILEGES ON `testdb`.* TO `test`@'localhost';
 
-CREATE USER `test`@'%' IDENTIFIED BY 'secret' PASSWORD EXPIRE NEVER ;
-GRANT ALL PRIVILEGES ON `testdb`.* TO 'test'@'%' ;
+CREATE USER IF NOT EXISTS `test`@'%' IDENTIFIED BY 'secret' PASSWORD EXPIRE NEVER;
+GRANT ALL PRIVILEGES ON `testdb`.* TO 'test'@'%';
 
-FLUSH PRIVILEGES ;
+FLUSH PRIVILEGES;
