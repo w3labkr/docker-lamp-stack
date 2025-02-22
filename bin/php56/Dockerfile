@@ -1,73 +1,46 @@
-FROM php:5.6-apache
+FROM php:7.1.20-apache
 
-# Backup and clean source.list file
+# Backup old sources.list and set new sources for stretch from archive.debian.org
 RUN cp /etc/apt/sources.list /etc/apt/sources.list.old && \
-    cat /dev/null > /etc/apt/sources.list
+    cat /dev/null > /etc/apt/sources.list && \
+    printf "deb http://archive.debian.org/debian/ stretch main\n" > /etc/apt/sources.list && \
+    printf "deb-src http://archive.debian.org/debian/ stretch main\n" >> /etc/apt/sources.list && \
+    printf "deb http://archive.debian.org/debian-security stretch/updates main\n" >> /etc/apt/sources.list && \
+    printf "deb-src http://archive.debian.org/debian-security stretch/updates main" >> /etc/apt/sources.list
 
-# Fix the source.list for stretch
-RUN printf "deb http://archive.debian.org/debian/ stretch main\n" > /etc/apt/sources.list && \
-    printf "deb-src http://archive.debian.org/debian/ stretch main\n" >>  /etc/apt/sources.list && \
-    printf "deb http://archive.debian.org/debian-security stretch/updates main\n" >>  /etc/apt/sources.list && \
-    printf "deb-src http://archive.debian.org/debian-security stretch/updates main" >>  /etc/apt/sources.list
+# Update system, upgrade, and install all required packages in one layer; then clean apt cache
+RUN apt-get update --fix-missing && \
+    apt-get upgrade -y && \
+    apt-get install -y --no-install-recommends build-essential git curl && \
+    apt-get install -y --no-install-recommends libmcrypt-dev libsqlite3-dev libsqlite3-0 mysql-client zlib1g-dev libzip-dev libicu-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev libcurl3 libcurl3-dev && \
+    apt-get install -y --no-install-recommends apt-utils nano wget dialog zip unzip p7zip-full && \
+    rm -rf /var/lib/apt/lists/*
 
-RUN apt-get -y update && apt-get upgrade -y
-
-# Install redis
-RUN pecl install -o -f redis-4.3.0 && \
-    rm -rf /tmp/pear && \
-    docker-php-ext-enable redis
-
-# Install tools && libraries
-RUN apt-get -y install --fix-missing nano wget dialog \
-    build-essential git curl libcurl3 libcurl3-dev zip \
-    libmcrypt-dev libsqlite3-dev libsqlite3-0 mysql-client \
-    zlib1g-dev libicu-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-# As there is no 'unzip' nor '7z' command installed zip files are being unpacked using the PHP zip extension.
-# This may cause invalid reports of corrupted archives. Besides, any UNIX permissions (e.g. executable) defined in the archives will be lost.
-# Installing 'unzip' or '7z' (21.01+) may remediate them.
-RUN apt-get -y update && \
-    apt-get -y --no-install-recommends install unzip p7zip-full
-
-# Composer
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# PHP5 Extensions
-RUN docker-php-ext-install curl \
-    && docker-php-ext-install tokenizer \
-    && docker-php-ext-install json \
-    && docker-php-ext-install bcmath \
-    && docker-php-ext-install mcrypt \
-    && docker-php-ext-install pdo_mysql \
-    && docker-php-ext-install pdo_sqlite \
-    && docker-php-ext-install mysqli \
-    && docker-php-ext-install zip \
-    && docker-php-ext-install -j$(nproc) intl \
-    && docker-php-ext-install mbstring \
-    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
-    && docker-php-ext-install -j$(nproc) gd \
-    && pecl install xdebug-2.5.5 && docker-php-ext-enable xdebug \
-    && echo "xdebug.remote_enable=1" >> /usr/local/etc/php/php.ini
+# Install PHP extensions and PECL extensions in one RUN command
+RUN docker-php-ext-install curl tokenizer json bcmath mcrypt pdo_mysql pdo_sqlite mysqli zip intl mbstring gettext && \
+    docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ && \
+    docker-php-ext-install -j$(nproc) gd && \
+    pecl install xdebug-2.5.5 && docker-php-ext-enable xdebug && \
+    echo "xdebug.remote_enable=1" >> /usr/local/etc/php/php.ini && \
+    pecl install -o -f redis-5.3.7 && rm -rf /tmp/pear && docker-php-ext-enable redis
 
-# Enable apache modules
+# Enable Apache modules: rewrite and headers
 RUN a2enmod rewrite headers
 
-# Enable apache ssl
-RUN mkdir -p /etc/apache2/ssl/
-RUN openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -subj \
-    "/C=../ST=...../L=..../O=..../CN=..." \
-    -keyout /etc/apache2/ssl/ssl.key -out /etc/apache2/ssl/ssl.crt
-RUN mkdir -p /var/run/apache2/
-RUN a2enmod ssl \
-    && a2ensite default-ssl \
-    && c_rehash /etc/apache2/ssl/
+# Set up Apache SSL: create certificate and enable SSL site
+RUN mkdir -p /etc/apache2/ssl/ /var/run/apache2/ && \
+    openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 \
+        -subj "/C=../ST=...../L=..../O=..../CN=..." \
+        -keyout /etc/apache2/ssl/ssl.key -out /etc/apache2/ssl/ssl.crt && \
+    a2enmod ssl && a2ensite default-ssl && c_rehash /etc/apache2/ssl/
 
-# Fix Permissions
+# Fix permissions for www-data
 RUN usermod -u 1000 www-data
 
 EXPOSE 80
-
 EXPOSE 443
 
 ENTRYPOINT ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
