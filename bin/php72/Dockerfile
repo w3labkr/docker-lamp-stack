@@ -23,6 +23,12 @@ RUN apt-get -yq install apt-utils nano wget dialog
 # Install important libraries
 RUN apt-get -y install --fix-missing apt-utils build-essential git curl libcurl3 libcurl3-dev zip openssl
 
+# As there is no 'unzip' nor '7z' command installed zip files are being unpacked using the PHP zip extension.
+# This may cause invalid reports of corrupted archives. Besides, any UNIX permissions (e.g. executable) defined in the archives will be lost.
+# Installing 'unzip' or '7z' (21.01+) may remediate them.
+RUN apt-get -y update && \
+    apt-get -y --no-install-recommends install unzip p7zip-full
+
 # Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 

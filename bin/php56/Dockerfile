@@ -24,6 +24,12 @@ RUN apt-get -y install --fix-missing nano wget dialog \
     zlib1g-dev libicu-dev libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# As there is no 'unzip' nor '7z' command installed zip files are being unpacked using the PHP zip extension.
+# This may cause invalid reports of corrupted archives. Besides, any UNIX permissions (e.g. executable) defined in the archives will be lost.
+# Installing 'unzip' or '7z' (21.01+) may remediate them.
+RUN apt-get -y update && \
+    apt-get -y --no-install-recommends install unzip p7zip-full
+
 # Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 

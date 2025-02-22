@@ -29,6 +29,12 @@ Create and start containers
 docker compose up -d
 ```
 
+Build or rebuild services
+
+```shell
+docker compose up --build
+```
+
 Stop and remove containers, networks
 
 ```shell

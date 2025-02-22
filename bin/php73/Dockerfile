@@ -20,6 +20,12 @@ RUN apt-get -y update --fix-missing && \
     apt-get --no-install-recommends install -y apt-utils && \
     rm -rf /var/lib/apt/lists/*
 
+# As there is no 'unzip' nor '7z' command installed zip files are being unpacked using the PHP zip extension.
+# This may cause invalid reports of corrupted archives. Besides, any UNIX permissions (e.g. executable) defined in the archives will be lost.
+# Installing 'unzip' or '7z' (21.01+) may remediate them.
+RUN apt-get -y update && \
+    apt-get -y --no-install-recommends install unzip p7zip-full
+
 # Install useful tools and install important libaries
 RUN apt-get -y update && \
     apt-get -y --no-install-recommends install nano wget dialog libsqlite3-dev libsqlite3-0 && \
