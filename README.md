@@ -19,6 +19,13 @@ cp .env.example .env
 docker compose up -d
 ```
 
+Register crontab and rebuild services
+
+```shell
+$ cp docker-entrypoint.sh bin/<PHP_VERSION>/docker-entrypoint.sh
+$ docker compose up -d --build
+```
+
 ## Usage
 
 Create and start containers

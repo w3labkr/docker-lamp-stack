@@ -61,3 +61,10 @@ RUN mkdir -p /etc/apache2/ssl/ /var/run/apache2/ && \
 
 # Change www-data UID to 1000
 RUN usermod -u 1000 www-data
+
+# Copy the entrypoint script and grant execution permission
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Set the custom entrypoint to run cron and Apache
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

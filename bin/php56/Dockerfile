@@ -40,7 +40,12 @@ RUN mkdir -p /etc/apache2/ssl/ /var/run/apache2/ && \
 # Fix permissions for www-data
 RUN usermod -u 1000 www-data
 
+# Copy the entrypoint script and grant execution permission
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 80
 EXPOSE 443
 
-ENTRYPOINT ["/usr/sbin/apache2ctl", "-D", "FOREGROUND"]
+# Set the custom entrypoint to run cron and Apache
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
