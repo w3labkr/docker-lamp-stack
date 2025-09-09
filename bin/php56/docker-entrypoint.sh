@@ -1,6 +1,13 @@
 #!/bin/bash
-# Start the cron daemon in the background
-cron
+set -e
 
-# Start Apache in the foreground
-exec /usr/sbin/apache2ctl -D FOREGROUND
+# Create necessary directories
+mkdir -p /var/run/apache2 /var/log/apache2
+
+# Start cron if available
+if command -v cron >/dev/null 2>&1; then
+    cron
+fi
+
+# Start Apache in foreground
+exec apache2-foreground
